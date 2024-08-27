@@ -17,6 +17,7 @@ class InitialBinding implements Bindings {
     Get.lazyPut<MyTabController>(() => MyTabController());
     Get.lazyPut<SettingsController>(() => SettingsController());
     Get.lazyPut<FailuresController>(() => FailuresController());
+    Get.lazyPut<FailureMonitorService>(() => FailureMonitorService());
     // Get.lazyPut<CircuitMonitoringController>(
     //     () => CircuitMonitoringController());
   }

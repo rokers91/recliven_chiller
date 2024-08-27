@@ -6,9 +6,10 @@ import 'package:excel/excel.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
+
 import 'package:recliven_chiller/barrel/core.dart';
-import 'package:recliven_chiller/barrel/controllers.dart';
 import 'package:recliven_chiller/barrel/models.dart';
+import 'package:recliven_chiller/barrel/services.dart';
 
 //muestra dialogo para exportar los archivos
 
@@ -115,7 +116,7 @@ Future<Directory> getExportDirectory() async {
   return exportDir;
 }
 
-void showExportDialog(FailuresController controller) {
+void showExportDialog(FailureMonitorService controller) {
   if (controller.events.isEmpty) {
     SnackbarUtils.showWarning(
         'Advertencia', 'No hay datos en la tabla para exportar.');
@@ -137,7 +138,7 @@ void showExportDialog(FailuresController controller) {
   );
 }
 
-void exportToExcel(FailuresController controller) async {
+void exportToExcel(FailureMonitorService controller) async {
   try {
     // Crear un nuevo documento Excel
     Excel excel = Excel.createExcel();
@@ -220,7 +221,7 @@ void exportToExcel(FailuresController controller) async {
   }
 }
 
-void exportToTxt(FailuresController controller) async {
+void exportToTxt(FailureMonitorService controller) async {
   try {
     // Obtener la ruta del almacenamiento interno
     Directory exportDir = await getExportDirectory();

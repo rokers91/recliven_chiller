@@ -95,4 +95,125 @@ class SnackbarUtils {
       );
     }
   }
+
+  static void showPersistentWarningSnackbar(String title, String content,
+      {VoidCallback? onAccept}) {
+    Get.snackbar(
+      '',
+      '',
+      snackPosition: SnackPosition.BOTTOM,
+      snackStyle: SnackStyle.FLOATING,
+      backgroundColor: AppColors.primaryColorOrange100,
+      colorText: AppColors.blackColorWithOpacity,
+      duration: const Duration(days: 365),
+      borderRadius: 8,
+      margin: EdgeInsets.all(SizeConstants.paddingMedium),
+      isDismissible: false,
+      icon: const Icon(
+        Icons.warning_amber_rounded,
+        color: AppColors.redAccentColor,
+        size: 28, // Tamaño del icono
+      ),
+      // Añadir un borde alrededor del Snackbar
+      borderWidth: 2, // Ancho de la línea del borde
+      borderColor: AppColors.redAccentColor, // Color del borde
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          offset: const Offset(0, 5),
+        ),
+      ],
+      messageText: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título con estilo sin subrayado
+          Text(
+            title,
+            style: TextStyle(
+              color: AppColors.redAccentColor,
+              fontSize: SizeConstants.textSizeLarge,
+              fontWeight: FontWeight.bold,
+              decoration: TextDecoration.none, // Sin subrayado
+            ),
+          ),
+          const SizedBox(height: 5), // Espacio entre el título y el contenido
+          // Contenido
+          Text(
+            content,
+            style: TextStyle(
+              color: AppColors.blackColorWithOpacity,
+              fontSize: SizeConstants.textSizeMedium,
+              height: 1.4, // Altura de línea para mejorar la legibilidad
+            ),
+            textAlign: TextAlign.justify,
+          ),
+          const SizedBox(height: 10), // Espacio entre el contenido y el botón
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                if (onAccept != null) {
+                  onAccept(); // Ejecuta la función pasada como callback
+                }
+              },
+              child: const Text(
+                'Aceptar',
+                style: TextStyle(
+                  color: AppColors.redAccentColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // static void showPersistentWarningSnackbar(String title, String content,
+  //     {VoidCallback? onAccept}) {
+  //   Get.snackbar(
+  //     title,
+  //     '',
+  //     snackPosition: SnackPosition.BOTTOM,
+  //     snackStyle: SnackStyle.FLOATING,
+  //     backgroundColor: AppColors.primaryColorOrange100,
+  //     colorText: AppColors.blackColorWithOpacity,
+  //     duration: const Duration(days: 365),
+  //     borderRadius: 8,
+  //     margin: EdgeInsets.all(SizeConstants.paddingMedium),
+  //     isDismissible: false,
+  //     icon: const Icon(
+  //       Icons.warning_amber_rounded,
+  //       color: AppColors.redAccentColor,
+  //     ),
+  //     messageText: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(
+  //           content,
+  //           style: const TextStyle(color: AppColors.blackColorWithOpacity),
+  //           textAlign: TextAlign.justify,
+  //         ),
+  //         const SizedBox(height: 10), // Espacio entre el texto y el botón
+  //         Align(
+  //           alignment: Alignment.centerRight,
+  //           child: TextButton(
+  //             onPressed: () {
+  //               if (onAccept != null) {
+  //                 onAccept(); // Ejecuta la función pasada como callback
+  //               }
+  //               Get.back(); // Cierra el Snackbar
+  //             },
+  //             child: const Text(
+  //               'Aceptar',
+  //               style: TextStyle(color: AppColors.redAccentColor),
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

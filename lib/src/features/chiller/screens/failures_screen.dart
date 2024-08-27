@@ -1,4 +1,4 @@
-// ignore_for_file: unnecessary_import
+// ignore_for_file: unnecessary_import, avoid_print
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -16,6 +16,7 @@ class FailuresScreen extends GetWidget<FailuresController> {
   FailuresScreen({super.key});
 
   final BluetoothService _bluetoothService = Get.find();
+  final failureMonitorService = Get.find<FailureMonitorService>();
 
   @override
   Widget build(BuildContext context) {
@@ -84,8 +85,9 @@ class FailuresScreen extends GetWidget<FailuresController> {
           onPressed: () async {
             if (!controller.isCleanning.value ||
                 !controller.isUpdatingTable.value) {
-              if (!Get.isSnackbarOpen && controller.events.isNotEmpty) {
-                showExportDialog(controller);
+              if (!Get.isSnackbarOpen &&
+                  failureMonitorService.events.isNotEmpty) {
+                showExportDialog(failureMonitorService);
               }
             }
           },
@@ -103,10 +105,21 @@ class FailuresScreen extends GetWidget<FailuresController> {
         SizedBox(width: SizeConstants.paddingSmall),
         ElevatedButton(
           onPressed: () async {
-            if (!controller.isUpdatingTable.value) {
-              controller.isUpdatingTable.value = true;
-              await Future.delayed(const Duration(seconds: 2));
-              controller.updateEvents();
+            if (!Get.isSnackbarOpen) {
+              if (failureMonitorService.events.length <=
+                  failureMonitorService.maxFailures) {
+                controller.isUpdatingTable.value = true;
+                await Future.delayed(const Duration(seconds: 2));
+                controller.updateEvents();
+              } else {
+                SnackbarUtils.showPersistentWarningSnackbar(
+                  'Advertencia',
+                  'La tabla de fallos está llena. \nPor favor guarde los fallos existentes para evitar pérdida de información y luego proceda a limpiar la tabla.',
+                  onAccept: () {
+                    Get.back();
+                  },
+                );
+              }
             }
           },
           style: ElevatedButton.styleFrom(
@@ -129,6 +142,7 @@ class FailuresScreen extends GetWidget<FailuresController> {
                   '¿Estás seguro de que desea limpiar la tabla de históricos?. Esta acción no se puede deshacer.',
                   true, () {
                 controller.clearData();
+                controller.hasShownSnackbar.value = false;
                 Get.back();
               });
             }
@@ -163,7 +177,7 @@ class FailuresScreen extends GetWidget<FailuresController> {
               color: AppColors.primaryColorOrange300,
             ),
           )
-        : controller.events.isEmpty
+        : failureMonitorService.events.isEmpty
             ? _buildEmptyPlaceholder()
             : _buildDataTable(context);
   }
@@ -247,7 +261,7 @@ class FailuresScreen extends GetWidget<FailuresController> {
                     // style: BorderStyle.solid,
                   ),
                   columns: _buildColumns(),
-                  rows: _buildRows(context, controller.events),
+                  rows: _buildRows(context, failureMonitorService.events),
                 ),
               ),
             ),

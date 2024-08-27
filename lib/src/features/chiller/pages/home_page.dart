@@ -70,7 +70,9 @@ class _HomePageState extends State<HomePage> {
                       size: SizeConstants.iconSizeMedium,
                     ),
                     onPressed: () {
-                      Get.to(() => const InfoPage());
+                      if (!Get.isSnackbarOpen) {
+                        Get.to(() => const InfoPage());
+                      }
                     },
                   ),
                 ),
@@ -157,7 +159,9 @@ class _HomePageState extends State<HomePage> {
                   title: (isConnected) ? name ?? '' : 'Conectar',
                   icon: Icons.bluetooth,
                   onTap: () {
-                    showBluetoothConnectionsSheetOptions(_bluetoothService);
+                    if (!Get.isSnackbarOpen) {
+                      showBluetoothConnectionsSheetOptions(_bluetoothService);
+                    }
                   },
                 );
               }),
@@ -166,11 +170,13 @@ class _HomePageState extends State<HomePage> {
                 title: 'Salir',
                 icon: Icons.exit_to_app,
                 onTap: () {
-                  showCustomDialog('Confirmación',
-                      'Seguro desea abandonar la aplicación?', true, () {
-                    _bluetoothService.disconnect();
-                    exit(0);
-                  });
+                  if (!Get.isSnackbarOpen) {
+                    showCustomDialog('Confirmación',
+                        'Seguro desea abandonar la aplicación?', true, () {
+                      _bluetoothService.disconnect();
+                      exit(0);
+                    });
+                  }
                 },
               ),
             ],
