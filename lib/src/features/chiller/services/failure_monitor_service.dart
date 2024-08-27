@@ -20,10 +20,10 @@ class FailureMonitorService extends GetxService {
 
     if (totalEvents >= maxFailures * 0.8 && totalEvents < maxFailures * 0.99) {
       if (!hasShownWarning80.value) {
-        print('*****************************esto ejecutandome en el servicio');
+        print('*****************************estoy ejecutandome en el servicio');
         _showWarning(
           'Advertencia',
-          'Queda poco espacio en la tabla, por favor guarde los datos.',
+          'Queda poco espacio en la tabla, por favor guarde los fallos para evitar pérdida de información.',
         );
         hasShownWarning80.value = true;
       }
@@ -31,7 +31,7 @@ class FailureMonitorService extends GetxService {
 
     if (totalEvents >= maxFailures) {
       if (!hasShownMaxLimitWarning.value) {
-        print('*****************************esto ejecutandome en el servicio');
+        print('*****************************estoy ejecutandome en el servicio');
 
         _showWarning(
           'Advertencia',

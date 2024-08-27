@@ -104,14 +104,36 @@ class FailuresScreen extends GetWidget<FailuresController> {
         ),
         SizedBox(width: SizeConstants.paddingSmall),
         ElevatedButton(
+          // onPressed: () async {
+          //   if (!Get.isSnackbarOpen) {
+          //     if (failureMonitorService.events.length <=
+          //         failureMonitorService.maxFailures) {
+          //       controller.isUpdatingTable.value = true;
+          //       await Future.delayed(const Duration(seconds: 2));
+          //       controller.updateEvents();
+          //     }
+          //     if (failureMonitorService.events.length >
+          //         failureMonitorService.maxFailures) {
+          //       SnackbarUtils.showPersistentWarningSnackbar(
+          //         'Advertencia',
+          //         'La tabla de fallos está llena. \nPor favor guarde los fallos existentes para evitar pérdida de información y luego proceda a limpiar la tabla.',
+          //         onAccept: () {
+          //           Get.back();
+          //         },
+          //       );
+          //     }
+          //   }
+          // },
           onPressed: () async {
             if (!Get.isSnackbarOpen) {
-              if (failureMonitorService.events.length <=
-                  failureMonitorService.maxFailures) {
+              final currentFailures = failureMonitorService.events.length;
+              final maxFailures = failureMonitorService.maxFailures;
+
+              if (currentFailures < maxFailures) {
                 controller.isUpdatingTable.value = true;
                 await Future.delayed(const Duration(seconds: 2));
                 controller.updateEvents();
-              } else {
+              } else if (currentFailures >= maxFailures) {
                 SnackbarUtils.showPersistentWarningSnackbar(
                   'Advertencia',
                   'La tabla de fallos está llena. \nPor favor guarde los fallos existentes para evitar pérdida de información y luego proceda a limpiar la tabla.',
@@ -122,6 +144,7 @@ class FailuresScreen extends GetWidget<FailuresController> {
               }
             }
           },
+
           style: ElevatedButton.styleFrom(
             foregroundColor: AppColors.backgroundColor,
             backgroundColor: AppColors.primaryColorOrange300,
@@ -401,59 +424,51 @@ class FailuresScreen extends GetWidget<FailuresController> {
   }
 }
 
-
-
-
-
-
 // Widget _buildLoadButton() {
-  //   return Visibility(
-  //     visible: controller.events.isEmpty,
-  //     child: Expanded(
-  //       child: ElevatedButton(
-  //         onPressed: () async {
-  //           controller.isLoadingTable.value = true;
-  //           controller.isVisibleLoad.value = true;
-  //           await Future.delayed(const Duration(seconds: 2));
-  //           controller.loadEvents();
-  //         },
-  //         style: ElevatedButton.styleFrom(
-  //           foregroundColor: AppColors.backgroundColor,
-  //           backgroundColor: AppColors.primaryColorOrange300,
-  //           minimumSize: Size(double.infinity, SizeConstants.buttonLarge),
-  //         ),
-  //         child: Text(
-  //           'Cargar datos',
-  //           style: TextStyle(fontSize: SizeConstants.textSizeMedium),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
+//   return Visibility(
+//     visible: controller.events.isEmpty,
+//     child: Expanded(
+//       child: ElevatedButton(
+//         onPressed: () async {
+//           controller.isLoadingTable.value = true;
+//           controller.isVisibleLoad.value = true;
+//           await Future.delayed(const Duration(seconds: 2));
+//           controller.loadEvents();
+//         },
+//         style: ElevatedButton.styleFrom(
+//           foregroundColor: AppColors.backgroundColor,
+//           backgroundColor: AppColors.primaryColorOrange300,
+//           minimumSize: Size(double.infinity, SizeConstants.buttonLarge),
+//         ),
+//         child: Text(
+//           'Cargar datos',
+//           style: TextStyle(fontSize: SizeConstants.textSizeMedium),
+//         ),
+//       ),
+//     ),
+//   );
+// }
 
+// } else if (controller.events.isEmpty) {
+//   return
+// } else if (controller.events.isNotEmpty) {
+//   return _buildDataTable(context);
+// } else {
+//   return _buildEmptyPlaceholder();
+// }
 
-
-
-      // } else if (controller.events.isEmpty) {
-    //   return
-    // } else if (controller.events.isNotEmpty) {
-    //   return _buildDataTable(context);
-    // } else {
-    //   return _buildEmptyPlaceholder();
-    // }
-
-    // if (isLoading) {
-    //   return Expanded(
-    //     child: LoadingIndicator(
-    //       isLoading: isLoading,
-    //       loadingKey: controller.isCleanning.value ? 'cleaning' : 'loadingData',
-    //       color: AppColors.primaryColorOrange300,
-    //     ),
-    //   );
-    // } else if (controller.events.isEmpty) {
-    //   return _buildEmptyPlaceholder();
-    // } else if (controller.events.isNotEmpty) {
-    //   return _buildDataTable(context);
-    // } else {
-    //   return _buildEmptyPlaceholder();
-    // }
+// if (isLoading) {
+//   return Expanded(
+//     child: LoadingIndicator(
+//       isLoading: isLoading,
+//       loadingKey: controller.isCleanning.value ? 'cleaning' : 'loadingData',
+//       color: AppColors.primaryColorOrange300,
+//     ),
+//   );
+// } else if (controller.events.isEmpty) {
+//   return _buildEmptyPlaceholder();
+// } else if (controller.events.isNotEmpty) {
+//   return _buildDataTable(context);
+// } else {
+//   return _buildEmptyPlaceholder();
+// }
