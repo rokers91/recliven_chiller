@@ -1,13 +1,19 @@
 //se definen los tamaños de las fuentes, espaciado, iconos, etc.
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 class SizeConstants {
+  // Información del tamaño de la pantalla
+  static double screenWidth = Get.size.width;
+  static double screenHeight = Get.size.height;
+
   //espaciado
   static final double paddingMinumus = 2.0.w;
   static final double paddingSmall = 4.0.w;
   static final double paddingMedium = 8.0.w;
   static final double paddingLarge = 16.0.w;
+  static final double paddingLargeExtended = 20.0.w;
 
   //elevations
   static final double elevation = 8.0.w;
@@ -19,13 +25,16 @@ class SizeConstants {
   static final double textSizeLargeExtended = 22.0.sp;
 
   //bordes
+  static final double borderRadiusMinimus = 2.0.w;
   static final double borderRadiusSmall = 8.0.w;
   static final double borderRadiusMedium = 10.0.w;
   static final double borderRadiusLarge = 15.0.w;
 
   //tamaño de los iconos
+  static final double iconSizeMinimus = 8.0.w;
   static final double iconSizeSmall = 12.0.w;
   static final double iconSizeMedium = 24.0.w;
+  static final double iconSizeMediumExtended30 = 30.0.w;
   static final double iconSizeMediumExtended = 40.0.w;
   static final double iconSizeLarge = 48.0.w;
   static final double iconSizeSuperLarge = 80.0.w;
@@ -55,6 +64,4 @@ class SizeConstants {
   //dimensiones de la tabla
   static final double columnSpacing = 50.0.w;
   static final double tableRowTextSize = 12.0.w;
-
-// SizeConstants.textSizeLarge
 }

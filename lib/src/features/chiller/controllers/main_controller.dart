@@ -1,12 +1,11 @@
-// ignore_for_file: avoid_print
-
-import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:get/get.dart';
-import 'package:recliven_chiller/barrel/models.dart';
-import 'package:recliven_chiller/barrel/services.dart';
 import 'package:recliven_chiller/barrel/controllers.dart';
 import 'package:recliven_chiller/barrel/core.dart';
+import 'package:recliven_chiller/barrel/models.dart';
+import 'package:recliven_chiller/barrel/services.dart';
+import 'package:recliven_chiller/barrel/widgets.dart';
 
 // Este controlador maneja todo lo relacionado a la pantalla principal
 class MainController extends GetxController {
@@ -24,6 +23,8 @@ class MainController extends GetxController {
   static const int maxWorkingTime = 65530;
   static const int maintenanceThreshold = 4383; // 6 meses en horas
   static const int warningThreshold = 60000; // Advertencia a las 60000 horas
+  static const int longWorkingTimeThreshold =
+      5000; // Advertencia de mucho tiempo trabajado
 
   @override
   void onInit() {
@@ -84,15 +85,12 @@ class MainController extends GetxController {
               final int value2 = int.parse(value2Str);
               circuitsData.add(CircuitData(id, value1, value2));
               _status.value = RequestState.success;
-
-              // // Actualiza el controlador de monitoreo de circuitos
-              // final monitoringController =
-              //     Get.find<CircuitMonitoringController>();
-              // monitoringController._checkCircuits();
             }
           }
         }
       }
+      // Verifica los límites de tiempo de trabajo
+      checkWorkingTimeLimits();
       circuitsData.refresh();
     } catch (e) {
       _status.value = RequestState.error;
@@ -155,7 +153,345 @@ class MainController extends GetxController {
   void showErrorDialog() {
     _bluetoothService.handleConnectionError('Error de conexión');
   }
+
+  // Verifica los límites de tiempo de trabajo y muestra un mensaje si hay problemas
+  void checkWorkingTimeLimits() {
+    List<TextSpan> issues = [];
+
+    issues = generateIssuesText(circuitsData,
+        maintenanceThreshold: maintenanceThreshold,
+        longWorkingTimeThreshold: longWorkingTimeThreshold,
+        warningThreshold: warningThreshold);
+
+    // for (final c in circuitsData) {
+    //   if (c.workingTime >= maintenanceThreshold &&
+    //       c.workingTime < longWorkingTimeThreshold) {
+    //     issues.add(
+    //         'Circuito ${c.circuit}: Mantenimiento requerido, ${c.workingTime} horas.');
+    //   } else if (c.workingTime >= longWorkingTimeThreshold &&
+    //       c.workingTime < warningThreshold) {
+    //     issues.add(
+    //         'Circuito ${c.circuit}: Mucho tiempo trabajando,  ${c.workingTime} horas.');
+    //   } else if (c.workingTime >= warningThreshold) {
+    //     issues.add(
+    //         'Circuito ${c.circuit}: Tiempo de trabajo excesivo, ${c.workingTime} horas.');
+    //   }
+    // }
+
+    if (issues.isNotEmpty) {
+      showCustomDialog(
+        title: 'Problemas detectados',
+        isFailureDialog: true,
+        issues: issues,
+        hasCancel: false,
+        todo: () {
+          // Acción a realizar cuando se presiona "Aceptar"
+          Get.back();
+        },
+      );
+    }
+  }
+
+  List<TextSpan> generateIssuesText(
+    List<CircuitData> circuitsData, {
+    required int maintenanceThreshold,
+    required int longWorkingTimeThreshold,
+    required int warningThreshold,
+  }) {
+    List<TextSpan> issues = [];
+
+    for (final c in circuitsData) {
+      double workingTimeInMonths = c.workingTime / 730.0;
+      String workingTimeText = workingTimeInMonths
+          .toStringAsFixed(2); // Convertimos a meses con 2 decimales
+
+      if (c.workingTime >= maintenanceThreshold &&
+          c.workingTime < longWorkingTimeThreshold) {
+        issues.add(
+          TextSpan(
+            text: 'El circuito ',
+            children: [
+              TextSpan(
+                text: '${c.circuit}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(
+                text: ' requiere mantenimiento, tiene ',
+              ),
+              TextSpan(
+                text: ' $workingTimeText meses ',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(
+                text: 'trabajando.',
+              ),
+            ],
+          ),
+        );
+      } else if (c.workingTime >= longWorkingTimeThreshold &&
+          c.workingTime < warningThreshold) {
+        issues.add(
+          TextSpan(
+            text: 'El circuito',
+            children: [
+              TextSpan(
+                text: '${c.circuit}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(
+                text: ' ya tiene  trabajando ',
+              ),
+              TextSpan(
+                text: '$workingTimeText meses.',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        );
+      } else if (c.workingTime >= warningThreshold) {
+        issues.add(
+          TextSpan(
+            text: 'El circuito',
+            children: [
+              TextSpan(
+                text: ' ${c.circuit} ',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(
+                text: 'lleva  un tiempo excesivo trabajando.',
+              ),
+            ],
+          ),
+        );
+      }
+    }
+    return issues;
+  }
+
+  // void showIssuesDialog(BuildContext context, List<TextSpan> issues) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Problemas detectados'),
+  //       content: RichText(
+  //         text: TextSpan(
+  //           children: issues,
+  //           style: const TextStyle(
+  //             color: Colors.black,
+  //             fontSize: 16.0,
+  //           ),
+  //         ),
+  //       ),
+  //       actions: <Widget>[
+  //         TextButton(
+  //           onPressed: () => Get.back(),
+  //           child: const Text('Cerrar'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // void checkWorkingTimeLimits() {
+  //   List<String> issues = [];
+
+  //   for (final c in circuitsData) {
+  //     if (c.workingTime >= maintenanceThreshold &&
+  //         c.workingTime < longWorkingTimeThreshold) {
+  //       issues.add(
+  //           'Circuito ${c.circuit}: Mantenimiento requerido (Tiempo de trabajo: ${c.workingTime} horas)');
+  //     } else if (c.workingTime >= longWorkingTimeThreshold &&
+  //         c.workingTime < warningThreshold) {
+  //       issues.add(
+  //           'Circuito ${c.circuit}: Advertencia de mucho tiempo trabajado (Tiempo de trabajo: ${c.workingTime} horas)');
+  //     } else if (c.workingTime >= warningThreshold) {
+  //       issues.add(
+  //           'Circuito ${c.circuit}: Riesgo de daños por tiempo de trabajo excesivo (Tiempo de trabajo: ${c.workingTime} horas)');
+  //     }
+  //   }
+
+  //   if (issues.isNotEmpty) {
+  //     //DIALGO QUE MUESTRE LOS CIRCUITOS CON PROBLEMAS
+
+  //   }
+  // }
 }
+
+
+ // Get.dialog(
+      //   AlertDialog(
+      //     title: const Text('Problemas detectados'),
+      //     content: Column(
+      //       crossAxisAlignment: CrossAxisAlignment.start,
+      //       mainAxisSize: MainAxisSize.min,
+      //       children: issues.map((issue) => Text(issue)).toList(),
+      //     ),
+      //     actions: [
+      //       TextButton(
+      //         onPressed: () => Get.back(),
+      //         child: const Text('Cerrar'),
+      //       ),
+      //     ],
+      //   ),
+      // );
+// // ignore_for_file: avoid_print
+
+// import 'dart:async';
+// import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+// import 'package:get/get.dart';
+// import 'package:recliven_chiller/barrel/models.dart';
+// import 'package:recliven_chiller/barrel/services.dart';
+// import 'package:recliven_chiller/barrel/controllers.dart';
+// import 'package:recliven_chiller/barrel/core.dart';
+
+// // Este controlador maneja todo lo relacionado a la pantalla principal
+// class MainController extends GetxController {
+//   final BluetoothService _bluetoothService = Get.find();
+//   BluetoothNotificationController controller = Get.find();
+
+//   final _status = Rx<RequestState>(RequestState.loading);
+//   RequestState get status => _status.value;
+
+//   RxList<CircuitData> circuitsData = <CircuitData>[].obs;
+
+//   int mainDelayMessage = 5;
+
+//   // Límites de horas de trabajo
+//   static const int maxWorkingTime = 65530;
+//   static const int maintenanceThreshold = 4383; // 6 meses en horas
+//   static const int warningThreshold = 60000; // Advertencia a las 60000 horas
+
+//   @override
+//   void onInit() {
+//     super.onInit();
+//     // Cuando inicia se escuchan los nuevos mensajes que envía el servicio y los maneja
+//     // en caso de que sean referidos al main los procesa, también se inicia el envío de
+//     // comandos periódicos
+//     ever(_bluetoothService.lastMessage, handleBluetoothMessage);
+//     startPeriodicCommandSending();
+//   }
+
+//   // Para el envío de comandos periódicos
+//   void startPeriodicCommandSending() {
+//     _bluetoothService.startPeriodicCommandSending(
+//         BluetoothConstants.actualizarMain, Duration(seconds: mainDelayMessage));
+//   }
+
+//   // Detiene el envío de comandos periódicos
+//   void stopPeriodicCommandSending() {
+//     _bluetoothService.stopPeriodicCommandSending();
+//   }
+
+//   // Reinicia el envío de comandos periódicos
+//   void resumePeriodicCommandSending() {
+//     _bluetoothService.resumePeriodicCommandSending(
+//         BluetoothConstants.actualizarMain, Duration(seconds: mainDelayMessage));
+//   }
+
+//   // Maneja los mensajes entrantes y los compara con los datos que deben de llegar al main
+//   void handleBluetoothMessage(String data) {
+//     if (data.contains('R')) {
+//       processMainData(data);
+//     } else if (data.contains('Z')) {
+//       processResetTime(data);
+//     } else if (data.contains('W')) {
+//       processToResetEvent(data);
+//     }
+//   }
+
+//   // Procesa para obtener los datos de los circuitos
+//   void processMainData(String data) {
+//     try {
+//       final parts = data.split('F');
+//       circuitsData.clear();
+
+//       for (final part in parts) {
+//         if (part.isNotEmpty) {
+//           final subParts = part.split('S');
+//           if (subParts.length >= 4) {
+//             final String idStr = subParts[1];
+//             final String value1Str = subParts[2];
+//             final String value2Str = subParts[3];
+//             if (isNumeric(idStr) &&
+//                 isNumeric(value1Str) &&
+//                 isNumeric(value2Str)) {
+//               final int id = int.parse(idStr);
+//               final int value1 = int.parse(value1Str);
+//               final int value2 = int.parse(value2Str);
+//               circuitsData.add(CircuitData(id, value1, value2));
+//               _status.value = RequestState.success;
+
+//               // // Actualiza el controlador de monitoreo de circuitos
+//               // final monitoringController =
+//               //     Get.find<CircuitMonitoringController>();
+//               // monitoringController._checkCircuits();
+//             }
+//           }
+//         }
+//       }
+//       circuitsData.refresh();
+//     } catch (e) {
+//       _status.value = RequestState.error;
+//     }
+//   }
+
+//   bool isNumeric(String? str) => str != null && int.tryParse(str) != null;
+
+//   // Procesa para reiniciar el tiempo de trabajo
+//   void processResetTime(String message) {
+//     String circuitId = message[2];
+//     for (final c in circuitsData) {
+//       if (c.circuit == int.parse(circuitId)) {
+//         c.workingTime = 0;
+//         break;
+//       }
+//     }
+//     circuitsData.refresh();
+//   }
+
+//   // Procesa para reiniciar el fallo
+//   void processToResetEvent(String message) {
+//     String circuitId = message[2];
+//     for (final c in circuitsData) {
+//       if (c.circuit == int.parse(circuitId)) {
+//         c.failure = 0;
+//         break;
+//       }
+//     }
+//     circuitsData.refresh();
+//   }
+
+//   // Para reiniciar tiempo de trabajo
+//   Future<void> resetWorkingTime(String circuit) async {
+//     stopPeriodicCommandSending();
+//     await _bluetoothService
+//         .sendCommand('${BluetoothConstants.reiniciarTiempo}S${circuit}F');
+//     resumePeriodicCommandSending();
+//   }
+
+//   // Para reiniciar los fallos
+//   Future<void> resetEvent(String circuit) async {
+//     stopPeriodicCommandSending();
+//     await _bluetoothService
+//         .sendCommand('${BluetoothConstants.atenderFalla}S${circuit}F');
+//     resumePeriodicCommandSending();
+//   }
+
+//   // Para conectarse
+//   void connectToDevice(BluetoothDevice device) {
+//     _bluetoothService.connectToDeviceWithRetry(device, retries: 3);
+//   }
+
+//   // Para desconectarse
+//   void disconnectFromDevice() {
+//     _bluetoothService.disconnect();
+//   }
+
+//   // Muestra diálogo de error
+//   void showErrorDialog() {
+//     _bluetoothService.handleConnectionError('Error de conexión');
+//   }
+// }
 
 
 // import 'dart:async';

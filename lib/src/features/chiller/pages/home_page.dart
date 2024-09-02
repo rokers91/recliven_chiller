@@ -171,11 +171,16 @@ class _HomePageState extends State<HomePage> {
                 icon: Icons.exit_to_app,
                 onTap: () {
                   if (!Get.isSnackbarOpen) {
-                    showCustomDialog('Confirmación',
-                        'Seguro desea abandonar la aplicación?', true, () {
-                      _bluetoothService.disconnect();
-                      exit(0);
-                    });
+                    showCustomDialog(
+                        title: 'Confirmación',
+                        content: 'Seguro desea abandonar la aplicación?',
+                        isFailureDialog: false,
+                        issues: null,
+                        hasCancel: true,
+                        todo: () {
+                          _bluetoothService.disconnect();
+                          exit(0);
+                        });
                   }
                 },
               ),

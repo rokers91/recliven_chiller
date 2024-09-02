@@ -13,7 +13,8 @@ class FailuresController extends GetxController {
 
   var isCleanning = false.obs;
   var isLoadingTable = false.obs;
-  var isUpdatingTable = false.obs;
+  var isUpdating = false.obs;
+  var dataLoaded = false.obs; // Estado de carga de datos
   var noDataReceived = false.obs;
 
   var receivedFailures = 0.0.obs;
@@ -39,18 +40,6 @@ class FailuresController extends GetxController {
   void onClose() {
     _stopAllTimers();
     super.onClose();
-  }
-
-  // Método para configurar el estado de carga de la tabla
-  void setLoadingTable(bool isLoading) {
-    isLoadingTable.value = isLoading;
-  }
-
-  // Método para cargar eventos con retraso simulado
-  Future<void> loadEventsWithDelay() async {
-    await Future.delayed(const Duration(seconds: 2));
-    loadEvents();
-    setLoadingTable(false); // Detiene el indicador de carga
   }
 
   void handleBluetoothMessage(String message) {
@@ -82,15 +71,28 @@ class FailuresController extends GetxController {
     if (!isCleanning.value) {
       _initiateLoadingProcess();
       _updateButtonVisibility();
+      dataLoaded.value = true; // Cambiar el estado a cargado
     }
   }
 
   void updateEvents() {
     if (!isCleanning.value) {
-      // events.clear();
+      // failureMonitorService.events.clear();
       _initiateLoadingProcess();
       _updateButtonVisibility();
     }
+  }
+
+  void clearData() {
+    if (!isLoadingTable.value) {
+      isCleanning.value = true;
+      print('Sending clear command');
+      _bluetoothService.sendCommand(BluetoothConstants.eraseEvents);
+      _startTimer('cleaningTimer', _cleaningTimeoutAction);
+    } else {
+      isCleanning.value = false;
+    }
+    _updateButtonVisibility();
   }
 
   void _initiateLoadingProcess() {
@@ -114,26 +116,15 @@ class FailuresController extends GetxController {
 
   void _handleNoDataReceived() {
     isLoadingTable.value = false;
-    isUpdatingTable.value = false;
+    isUpdating.value = false;
     noDataReceived.value = failureMonitorService.events.isEmpty;
     print('No data received after maximum attempts');
-  }
-
-  void clearData() {
-    if (!isLoadingTable.value) {
-      isCleanning.value = true;
-      print('Sending clear command');
-      _bluetoothService.sendCommand(BluetoothConstants.eraseEvents);
-      _startTimer('cleaningTimer', _cleaningTimeoutAction);
-    } else {
-      isCleanning.value = false;
-    }
-    _updateButtonVisibility();
   }
 
   void _processCleanEvents() {
     try {
       print('Processing clean events');
+      dataLoaded.value = false;
       failureMonitorService.events.clear();
       _resetLoadingFlags();
       failureMonitorService.resetMonitoringFlags();
@@ -166,54 +157,11 @@ class FailuresController extends GetxController {
     }
   }
 
-  // void _addEvents(String data) {
-  //   final List<EventsInfoModel> newEvents = [];
-  //   final parts = data.split('T');
-  //   final int maxFailuresAllowed = maxNumFailure.value;
-  //   int failuresToAdd =
-  //       maxFailuresAllowed - failureMonitorService.currentFailuresCount.value;
-
-  //   for (final part in parts) {
-  //     if (failuresToAdd <= 0) {
-  //       print('Se alcanzó el límite máximo de fallos permitidos.');
-  //       break;
-  //     }
-
-  //     if (part.isNotEmpty) {
-  //       final subParts = part.split('S');
-  //       if (subParts.length >= 6) {
-  //         final event = EventsInfoModel(
-  //           dateEvent: subParts[1],
-  //           timeEvent: formatTime(subParts[2]),
-  //           typeEvento: subParts[3],
-  //           circuitEvent: subParts[4],
-  //           accumulatedTime: subParts[5],
-  //         );
-  //         newEvents.add(event);
-  //         failuresToAdd--;
-  //       }
-  //     }
-  //   }
-
-  //   if (newEvents.isNotEmpty) {
-  //     print('Añadiendo ${newEvents.length} nuevos fallos.');
-  //     failureMonitorService.addEvents(newEvents);
-  //   } else {
-  //     print('No se añadieron nuevos fallos.');
-  //   }
-  // }
-
   void _addEvents(String data) {
     final List<EventsInfoModel> newEvents = [];
     final parts = data.split('T');
 
     for (final part in parts) {
-      // if (newEvents.length >= maxNumFailure.value) {
-      //   print('Se alcanzó el límite máximo de fallos permitidos.');
-      //   failureMonitorService.checkFailures();
-      //   break;
-      // }
-
       if (part.isNotEmpty) {
         final subParts = part.split('S');
         if (subParts.length >= 6) {
@@ -232,20 +180,11 @@ class FailuresController extends GetxController {
           } else {
             failureMonitorService.checkFailures();
           }
-          // if (newEvents.length < maxNumFailure.value) {
-          //   newEvents.add(event);
-          //   // failureMonitorService.incrementFailureCount(); // Aumenta el contador de fallos en el servicio
-          // }
         }
       }
     }
     failureMonitorService.addEvents(newEvents);
-    // if (newEvents.isNotEmpty) {
-    //   print('Añadiendo ${newEvents.length} nuevos fallos.');
-    // failureMonitorService.addEvents(newEvents);
-    // } else {
-    //   print('No se añadieron nuevos fallos.');
-    // }
+    failureMonitorService.events.refresh();
   }
 
   void _handleProcessingError() {
@@ -256,7 +195,7 @@ class FailuresController extends GetxController {
 
   void _resetLoadingFlags() {
     isLoadingTable.value = false;
-    isUpdatingTable.value = false;
+    isUpdating.value = false;
     isCleanning.value = false;
     // failureMonitorService.resetMonitoringFlags();
   }
@@ -275,7 +214,7 @@ class FailuresController extends GetxController {
   }
 
   void _loadingTimeoutAction() {
-    if (isLoadingTable.value || isUpdatingTable.value) {
+    if (isLoadingTable.value) {
       print('Loading timeout');
       _resetLoadingFlags();
       SnackbarUtils.showError('Error', 'Tiempo de carga agotado.');
@@ -299,12 +238,18 @@ class FailuresController extends GetxController {
   void _stopAllTimers() {
     _timerService.stopTimer('loadingFailureScreenTimer');
     _timerService.stopTimer('cleaningTimer');
-    _timerService.stopTimer('updatingFailureScreenTimer');
+    // _timerService.stopTimer('updatingFailureScreenTimer');
   }
 
   void _updateButtonVisibility() {
-    isLoadButtonVisible.value = failureMonitorService.events.isEmpty;
-    isActionButtonsVisible.value = failureMonitorService.events.isNotEmpty;
+    // Si se está actualizando, no mostrar el botón de cargar
+    if (isUpdating.value) {
+      isLoadButtonVisible.value = false;
+      isActionButtonsVisible.value = false;
+    } else {
+      isLoadButtonVisible.value = failureMonitorService.events.isEmpty;
+      isActionButtonsVisible.value = failureMonitorService.events.isNotEmpty;
+    }
   }
 }
 
@@ -452,3 +397,70 @@ class FailuresController extends GetxController {
   //       }
   //     }
   //   }
+
+
+
+  
+  // void _addEvents(String data) {
+  //   final List<EventsInfoModel> newEvents = [];
+  //   final parts = data.split('T');
+  //   final int maxFailuresAllowed = maxNumFailure.value;
+  //   int failuresToAdd =
+  //       maxFailuresAllowed - failureMonitorService.currentFailuresCount.value;
+
+  //   for (final part in parts) {
+  //     if (failuresToAdd <= 0) {
+  //       print('Se alcanzó el límite máximo de fallos permitidos.');
+  //       break;
+  //     }
+
+  //     if (part.isNotEmpty) {
+  //       final subParts = part.split('S');
+  //       if (subParts.length >= 6) {
+  //         final event = EventsInfoModel(
+  //           dateEvent: subParts[1],
+  //           timeEvent: formatTime(subParts[2]),
+  //           typeEvento: subParts[3],
+  //           circuitEvent: subParts[4],
+  //           accumulatedTime: subParts[5],
+  //         );
+  //         newEvents.add(event);
+  //         failuresToAdd--;
+  //       }
+  //     }
+  //   }
+
+  //   if (newEvents.isNotEmpty) {
+  //     print('Añadiendo ${newEvents.length} nuevos fallos.');
+  //     failureMonitorService.addEvents(newEvents);
+  //   } else {
+  //     print('No se añadieron nuevos fallos.');
+  //   }
+  // }
+
+   // if (newEvents.length >= maxNumFailure.value) {
+      //   print('Se alcanzó el límite máximo de fallos permitidos.');
+      //   failureMonitorService.checkFailures();
+      //   break;
+      // }
+
+         // if (newEvents.length < maxNumFailure.value) {
+          //   newEvents.add(event);
+          //   // failureMonitorService.incrementFailureCount(); // Aumenta el contador de fallos en el servicio
+          // }
+
+              // if (newEvents.isNotEmpty) {
+    //   print('Añadiendo ${newEvents.length} nuevos fallos.');
+    // failureMonitorService.addEvents(newEvents);
+    // } else {
+    //   print('No se añadieron nuevos fallos.');
+    // }
+
+
+      // // Método para cargar eventos con retraso simulado
+  // Future<void> loadEventsWithDelay() async {
+  //   isLoadingTable.value = true;
+  //   await Future.delayed(const Duration(seconds: 2));
+  //   loadEvents();
+  //   isLoadingTable.value = false;
+  // }

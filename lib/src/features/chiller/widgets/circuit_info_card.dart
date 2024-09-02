@@ -159,13 +159,17 @@ class CircuitStateInfo extends StatelessWidget {
                             onPressed: (circuitData.workingTime != 0)
                                 ? () async {
                                     showCustomDialog(
-                                        'Confirmación',
-                                        '¿Estás seguro de que quieres reiniciar el tiempo trabajado por el circuito?',
-                                        true, () {
-                                      controller
-                                          .resetWorkingTime(id.toString());
-                                      Get.back();
-                                    });
+                                        title: 'Confirmación',
+                                        content:
+                                            '¿Estás seguro de que quieres reiniciar el tiempo trabajado por el circuito?',
+                                        isFailureDialog: false,
+                                        issues: null,
+                                        hasCancel: true,
+                                        todo: () {
+                                          controller
+                                              .resetWorkingTime(id.toString());
+                                          Get.back();
+                                        });
                                   }
                                 : null,
                             icon: Icon(Icons.refresh,
@@ -221,12 +225,18 @@ class CircuitStateInfo extends StatelessWidget {
                                 if (!isCircuitOn &&
                                     estadoCircuito != 'Reposo') {
                                   showCustomDialog(
-                                      'Confirmación',
-                                      '¿Está seguro de que desea reiniciar los fallos en el circuito?',
-                                      true, () {
-                                    controller.resetEvent(id.toString());
-                                    Get.back();
-                                  });
+                                    title: 'Confirmación',
+                                    content:
+                                        '¿Está seguro de que desea reiniciar los fallos en el circuito?',
+                                    issues:
+                                        null, // No es un diálogo de fallos, por lo que issues es null
+                                    hasCancel: true,
+                                    todo: () {
+                                      controller.resetEvent(id.toString());
+                                      Get.back();
+                                    },
+                                    isFailureDialog: false,
+                                  );
                                 }
                               },
                               icon: Icon(

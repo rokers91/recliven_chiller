@@ -44,7 +44,8 @@ class FailuresScreen extends GetWidget<FailuresController> {
       child: Row(
         children: [
           Obx(
-            () => controller.isLoadButtonVisible.value
+            () => controller.isLoadButtonVisible.value &&
+                    !controller.dataLoaded.value
                 ? _buildLoadButton()
                 : controller.isActionButtonsVisible.value
                     ? _buildExportUpdateAndClearButtons()
@@ -60,9 +61,8 @@ class FailuresScreen extends GetWidget<FailuresController> {
   Widget _buildLoadButton() {
     return Expanded(
       child: ElevatedButton(
-        onPressed: () async {
-          controller.setLoadingTable(true);
-          await controller.loadEventsWithDelay();
+        onPressed: () {
+          controller.loadEvents();
         },
         style: ElevatedButton.styleFrom(
           foregroundColor: AppColors.backgroundColor,
@@ -84,7 +84,7 @@ class FailuresScreen extends GetWidget<FailuresController> {
         ElevatedButton(
           onPressed: () async {
             if (!controller.isCleanning.value ||
-                !controller.isUpdatingTable.value) {
+                !controller.isLoadingTable.value) {
               if (!Get.isSnackbarOpen &&
                   failureMonitorService.events.isNotEmpty) {
                 showExportDialog(failureMonitorService);
@@ -104,34 +104,14 @@ class FailuresScreen extends GetWidget<FailuresController> {
         ),
         SizedBox(width: SizeConstants.paddingSmall),
         ElevatedButton(
-          // onPressed: () async {
-          //   if (!Get.isSnackbarOpen) {
-          //     if (failureMonitorService.events.length <=
-          //         failureMonitorService.maxFailures) {
-          //       controller.isUpdatingTable.value = true;
-          //       await Future.delayed(const Duration(seconds: 2));
-          //       controller.updateEvents();
-          //     }
-          //     if (failureMonitorService.events.length >
-          //         failureMonitorService.maxFailures) {
-          //       SnackbarUtils.showPersistentWarningSnackbar(
-          //         'Advertencia',
-          //         'La tabla de fallos está llena. \nPor favor guarde los fallos existentes para evitar pérdida de información y luego proceda a limpiar la tabla.',
-          //         onAccept: () {
-          //           Get.back();
-          //         },
-          //       );
-          //     }
-          //   }
-          // },
           onPressed: () async {
             if (!Get.isSnackbarOpen) {
               final currentFailures = failureMonitorService.events.length;
               final maxFailures = failureMonitorService.maxFailures;
 
               if (currentFailures < maxFailures) {
-                controller.isUpdatingTable.value = true;
-                await Future.delayed(const Duration(seconds: 2));
+                // await Future.delayed(const Duration(seconds: 2));
+                controller.isUpdating.value = true;
                 controller.updateEvents();
               } else if (currentFailures >= maxFailures) {
                 SnackbarUtils.showPersistentWarningSnackbar(
@@ -144,7 +124,6 @@ class FailuresScreen extends GetWidget<FailuresController> {
               }
             }
           },
-
           style: ElevatedButton.styleFrom(
             foregroundColor: AppColors.backgroundColor,
             backgroundColor: AppColors.primaryColorOrange300,
@@ -161,13 +140,17 @@ class FailuresScreen extends GetWidget<FailuresController> {
           onPressed: () async {
             if (!Get.isSnackbarOpen) {
               showCustomDialog(
-                  'Confirmación',
-                  '¿Estás seguro de que desea limpiar la tabla de históricos?. Esta acción no se puede deshacer.',
-                  true, () {
-                controller.clearData();
-                controller.hasShownSnackbar.value = false;
-                Get.back();
-              });
+                  title: 'Confirmación',
+                  content:
+                      '¿Estás seguro de que desea limpiar la tabla de históricos?. Esta acción no se puede deshacer.',
+                  isFailureDialog: false,
+                  issues: null,
+                  hasCancel: true,
+                  todo: () {
+                    controller.clearData();
+                    controller.hasShownSnackbar.value = false;
+                    Get.back();
+                  });
             }
           },
           style: ElevatedButton.styleFrom(
@@ -187,9 +170,8 @@ class FailuresScreen extends GetWidget<FailuresController> {
 
   //contruccion de la tabla de fallos o no datos
   Widget _buildDataTableOrPlaceholder(BuildContext context) {
-    bool isLoading = controller.isCleanning.value ||
-        controller.isUpdatingTable.value ||
-        controller.isLoadingTable.value;
+    bool isLoading =
+        controller.isCleanning.value || controller.isLoadingTable.value;
 
     return isLoading
         ? Expanded(
@@ -201,7 +183,9 @@ class FailuresScreen extends GetWidget<FailuresController> {
             ),
           )
         : failureMonitorService.events.isEmpty
-            ? _buildEmptyPlaceholder()
+            ? !controller.dataLoaded.value
+                ? _buildEmptyPlaceholder()
+                : const SizedBox.shrink()
             : _buildDataTable(context);
   }
 
@@ -472,3 +456,24 @@ class FailuresScreen extends GetWidget<FailuresController> {
 // } else {
 //   return _buildEmptyPlaceholder();
 // }
+
+    // onPressed: () async {
+          //   if (!Get.isSnackbarOpen) {
+          //     if (failureMonitorService.events.length <=
+          //         failureMonitorService.maxFailures) {
+          //       controller.isUpdatingTable.value = true;
+          //       await Future.delayed(const Duration(seconds: 2));
+          //       controller.updateEvents();
+          //     }
+          //     if (failureMonitorService.events.length >
+          //         failureMonitorService.maxFailures) {
+          //       SnackbarUtils.showPersistentWarningSnackbar(
+          //         'Advertencia',
+          //         'La tabla de fallos está llena. \nPor favor guarde los fallos existentes para evitar pérdida de información y luego proceda a limpiar la tabla.',
+          //         onAccept: () {
+          //           Get.back();
+          //         },
+          //       );
+          //     }
+          //   }
+          // },

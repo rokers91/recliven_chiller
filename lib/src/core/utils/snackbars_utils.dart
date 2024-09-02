@@ -106,17 +106,16 @@ class SnackbarUtils {
       backgroundColor: AppColors.primaryColorOrange100,
       colorText: AppColors.blackColorWithOpacity,
       duration: const Duration(days: 365),
-      borderRadius: 8,
+      borderRadius: SizeConstants.borderRadiusMedium,
       margin: EdgeInsets.all(SizeConstants.paddingMedium),
       isDismissible: false,
-      icon: const Icon(
-        Icons.warning_amber_rounded,
-        color: AppColors.redAccentColor,
-        size: 28, // Tamaño del icono
-      ),
-      // Añadir un borde alrededor del Snackbar
-      borderWidth: 2, // Ancho de la línea del borde
-      borderColor: AppColors.redAccentColor, // Color del borde
+      // icon: Icon(
+      //   Icons.warning_amber_rounded,
+      //   color: AppColors.redAccentColor,
+      //   size: SizeConstants.iconSizeLarge, // Tamaño del icono
+      // ),
+      borderWidth: SizeConstants.borderRadiusMinimus,
+      borderColor: AppColors.backgroundColor,
       boxShadows: [
         BoxShadow(
           color: Colors.black.withOpacity(0.1),
@@ -127,42 +126,40 @@ class SnackbarUtils {
       messageText: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Título con estilo sin subrayado
           Text(
             title,
             style: TextStyle(
               color: AppColors.redAccentColor,
-              fontSize: SizeConstants.textSizeLarge,
+              fontSize: SizeConstants.textSizeMedium,
               fontWeight: FontWeight.bold,
-              decoration: TextDecoration.none, // Sin subrayado
+              decoration: TextDecoration.none,
             ),
           ),
-          const SizedBox(height: 5), // Espacio entre el título y el contenido
-          // Contenido
+          SizedBox(height: SizeConstants.paddingMedium),
           Text(
             content,
             style: TextStyle(
               color: AppColors.blackColorWithOpacity,
-              fontSize: SizeConstants.textSizeMedium,
-              height: 1.4, // Altura de línea para mejorar la legibilidad
+              fontSize: SizeConstants.textSizeSmall,
+              height: 1.4,
             ),
             textAlign: TextAlign.justify,
           ),
-          const SizedBox(height: 10), // Espacio entre el contenido y el botón
+          SizedBox(height: SizeConstants.paddingMedium),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
               onPressed: () {
                 if (onAccept != null) {
-                  onAccept(); // Ejecuta la función pasada como callback
+                  onAccept();
                 }
               },
-              child: const Text(
+              child: Text(
                 'Aceptar',
                 style: TextStyle(
-                  color: AppColors.redAccentColor,
-                  fontWeight: FontWeight.bold,
-                ),
+                    color: AppColors.redAccentColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: SizeConstants.textSizeSmall),
               ),
             ),
           ),

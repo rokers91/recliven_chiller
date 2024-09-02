@@ -21,7 +21,7 @@ class BluetoothNotificationController extends GetxController {
     } else {
       _bluetoothService.disconnect();
       SnackbarUtils.showError(
-          'Desconectado', 'El dispositivo se encuentra desconectado.');
+          'Desconectado', 'El dispositivo no está dsponible para conexión.');
     }
   }
 }
