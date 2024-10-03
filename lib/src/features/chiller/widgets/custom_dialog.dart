@@ -164,7 +164,9 @@ class CustomDialog extends StatelessWidget {
           child: Text(
             'Aceptar',
             style: TextStyle(
-              fontSize: SizeConstants.textSizeMedium,
+              fontSize: isFailureDialog
+                  ? SizeConstants.textSizeSmall
+                  : SizeConstants.textSizeMedium,
               color: AppColors.primaryColorOrange400,
             ),
           ),
